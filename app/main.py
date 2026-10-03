@@ -55,7 +55,7 @@ app.add_middleware(
         else [
             *cors_origin_list(settings),
 
-            "https://agasaro-frontend.vercel.app",
+               "https://agasaro-frontend-kldp.vercel.app",
 
         ]
     ),
