@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 
-import app.models 
+import app.models
 from app.core.config import settings
 from app.infrastructure.runtime_config import cors_origin_list
 from app.infrastructure.rate_limit import limiter
@@ -28,21 +28,52 @@ from app.routers.user import router as user_router
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     validate_startup_configuration()
+
     if settings.app_env.lower() in {"development", "test"}:
         Base.metadata.create_all(bind=engine)
+
     yield
 
 
-app = FastAPI(title="Agasaro API", version="2.0.0", lifespan=lifespan)
+app = FastAPI(
+    title="Agasaro API",
+    version="2.0.0",
+    lifespan=lifespan,
+)
+
 app.state.limiter = limiter
-app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+app.add_exception_handler(
+    RateLimitExceeded,
+    _rate_limit_exceeded_handler,
+)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"] if settings.allow_all_cors else cors_origin_list(settings),
+    allow_origins=(
+        ["*"]
+        if settings.allow_all_cors
+        else [
+            *cors_origin_list(settings),
+
+            "https://agasaro-frontend.vercel.app",
+
+        ]
+    ),
     allow_credentials=not settings.allow_all_cors,
-    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allow_headers=["Authorization", "Content-Type", "Idempotency-Key", "X-Callback-Secret"],
+    allow_methods=[
+        "GET",
+        "POST",
+        "PUT",
+        "PATCH",
+        "DELETE",
+        "OPTIONS",
+    ],
+    allow_headers=[
+        "Authorization",
+        "Content-Type",
+        "Idempotency-Key",
+        "X-Callback-Secret",
+    ],
 )
 
 app.include_router(auth_router)
@@ -60,7 +91,11 @@ app.include_router(receipt_router)
 
 @app.get("/", tags=["System"])
 def read_root():
-    return {"status": "success", "message": "Agasaro Backend API is active", "version": app.version}
+    return {
+        "status": "success",
+        "message": "Agasaro Backend API is active",
+        "version": app.version,
+    }
 
 
 @app.get("/healthz", tags=["System"])
