@@ -50,15 +50,9 @@ app.add_exception_handler(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=(
-        ["*"]
-        if settings.allow_all_cors
-        else [
-            *cors_origin_list(settings),
-
-               "https://agasaro-frontend.vercel.app",
-
-        ]
+        ["*"] if settings.allow_all_cors else cors_origin_list(settings)
     ),
+    
     allow_credentials=not settings.allow_all_cors,
     allow_methods=[
         "GET",
